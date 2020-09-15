@@ -1,0 +1,4 @@
+*.big
+*.pth
+*.pth.tar
+__pycache__/
