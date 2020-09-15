@@ -2,3 +2,5 @@
 *.pth
 *.pth.tar
 __pycache__/
+datasets/
+dataset/
