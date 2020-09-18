@@ -1,6 +1,9 @@
 *.big
 *.pth
 *.pth.tar
+*.pickle
 __pycache__/
 datasets/
 dataset/
+pickles/
+pickle/
