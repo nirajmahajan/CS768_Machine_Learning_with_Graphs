@@ -23,13 +23,16 @@ def find_nbr_nonnbr(G):
 
 	return nbr_dict, nonnbr_dict
 
-def MAP(index_list, labels, tot_vetices):
+def MAP(index_list, labels, tot_vetices, topk = None):
 	ans = np.zeros((tot_vetices,))
 	count = np.zeros((tot_vetices,))
 	corr = np.zeros((tot_vetices,))
 
 	index_list.sort(reverse = True, key=lambda x:x[2])
 	for i,(a,b,_) in enumerate(index_list):
+		if not topk is None:
+			if i > topk:
+				break
 		if a > b:
 			temp = a
 			a = b
@@ -47,12 +50,14 @@ def MAP(index_list, labels, tot_vetices):
 	out = np.divide(ans[corr_indices],corr[corr_indices])
 	return out.mean()
 
-def MRR(index_list, labels, tot_vetices):
+def MRR(index_list, labels, tot_vetices, topk = None):
 	ans = np.zeros((tot_vetices,))-1
 	count = np.zeros((tot_vetices,))
-
 	index_list.sort(reverse = True, key=lambda x:x[2])
 	for i,(a,b,_) in enumerate(index_list):
+		if not topk is None:
+			if i > topk:
+				break
 		if a > b:
 			temp = a
 			a = b
@@ -66,29 +71,25 @@ def MRR(index_list, labels, tot_vetices):
 				ans[b] = 1/count[b]
 	ans_indices = np.invert(ans == -1)
 	count_indices = np.invert(count == 0)
-	return ans[ans_indices].sum()/count_indices.sum()
+	return ans[ans_indices].sum()/ans_indices.sum()
 
-def common_neighbor(gtrain, forgetting_factor_scale = 0.9, ebunch = None):
-	max_size = max(gtrain.nodes())+1
-	cn_mat = np.zeros((max_size, max_size))
-	for (a,b) in gtrain.edges():
-		if a > b:
-			continue
-		b_neighbors = set(gtrain.neighbors(b))
-		a_neighbors = set(gtrain.neighbors(a))
-		cn_mat[a,b] += len(set.intersection(a_neighbors, b_neighbors))
-		cn_mat[b,a] = cn_mat[a,b]
-
+def common_neighbor(gtrain, ebunch = None):
 	ans = []
-
 	if not ebunch is None:
 		for (a,b) in ebunch:
-			ans.append((a,b,cn_mat[a,b]))
+			# b_neighbors = set(gtrain.neighbors(b))
+			# a_neighbors = set(gtrain.neighbors(a))
+			# cn = len(set.intersection(a_neighbors, b_neighbors))
+			cn = len(list(nx.common_neighbors(gtrain, a, b)))
+			ans.append((a,b,cn))
 	else:
 		for a in range(max_size):
 			for b in range(max_size):
 				if not (a,b) in gtrain.edges():
-					ans.append((a,b,cn_mat[a,b]))
+					b_neighbors = set(gtrain.neighbors(b))
+					a_neighbors = set(gtrain.neighbors(a))
+					cn = len(set.intersection(a_neighbors, b_neighbors))
+					ans.append((a,b,cn))
 	ans.sort(reverse = True, key=lambda x:x[2])
 	return ans
 

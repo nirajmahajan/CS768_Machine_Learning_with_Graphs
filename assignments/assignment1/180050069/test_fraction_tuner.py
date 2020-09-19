@@ -16,13 +16,17 @@ args = parser.parse_args()
 
 random.seed(0)
 
+G = nx.read_edgelist(filename)
+graph = Graph(G)
+
+
 if args.test_fraction == 0.1:
-	for tfi in range(60,70,1):
-		tf = tfi/1000
-		print('Using Test Fraction (for code) = {}\n'.format(tf))
+	for tfi in range(1):
+		tf = 0.11
+		print('\nUsing Test Fraction (for code) = {}'.format(tf))
 		# Calculate observed test_fraction
-		graph = Graph(filename)
 		# graph.split_train_test(test_fraction_mapping[args.test_fraction])
+		random.seed(0)
 		graph.split_train_test(tf)
 
 		print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
@@ -31,12 +35,12 @@ if args.test_fraction == 0.1:
 
 
 if args.test_fraction == 0.2:
-	for tfi in range(110,120,1):
+	for tfi in range(210,220,1):
 		tf = tfi/1000
-		print('Using Test Fraction (for code) = {}\n'.format(tf))
+		print('\nUsing Test Fraction (for code) = {}'.format(tf))
 		# Calculate observed test_fraction
-		graph = Graph(filename)
 		# graph.split_train_test(test_fraction_mapping[args.test_fraction])
+		random.seed(0)
 		graph.split_train_test(tf)
 
 		print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
@@ -44,12 +48,12 @@ if args.test_fraction == 0.2:
 	os._exit(0)
 
 if args.test_fraction == 0.3:
-	for tfi in range(170,180,1):
+	for tfi in range(300,310,1):
 		tf = tfi/1000
-		print('Using Test Fraction (for code) = {}\n'.format(tf))
+		print('\nUsing Test Fraction (for code) = {}'.format(tf))
 		# Calculate observed test_fraction
-		graph = Graph(filename)
 		# graph.split_train_test(test_fraction_mapping[args.test_fraction])
+		random.seed(0)
 		graph.split_train_test(tf)
 
 		print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
@@ -57,12 +61,12 @@ if args.test_fraction == 0.3:
 	os._exit(0)
 
 if args.test_fraction == 0.4:
-	for tfi in range(230,240,1):
+	for tfi in range(410,420,1):
 		tf = tfi/1000
-		print('Using Test Fraction (for code) = {}\n'.format(tf))
+		print('\nUsing Test Fraction (for code) = {}'.format(tf))
 		# Calculate observed test_fraction
-		graph = Graph(filename)
 		# graph.split_train_test(test_fraction_mapping[args.test_fraction])
+		random.seed(0)
 		graph.split_train_test(tf)
 
 		print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
@@ -70,13 +74,14 @@ if args.test_fraction == 0.4:
 	os._exit(0)
 
 if args.test_fraction == 0:
-	for tfi in range(5,10,1):
+	for tfi in range(20,50,1):
 		tf = tfi/100
-		print('Using Test Fraction (for code) = {}\n'.format(tf))
+		print('\nUsing Test Fraction (for code) = {}'.format(tf))
 		# Calculate observed test_fraction
-		graph = Graph(filename)
 		# graph.split_train_test(test_fraction_mapping[args.test_fraction])
+		random.seed(0)
 		graph.split_train_test(tf)
 
 		print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
 		print ("Observed fraction of train non edges	  : %0.4f" % (len(graph.G_train_invert.edges())/(len(graph.G_train_invert.edges()) + len(graph.G_test_invert.edges()))))
+	os._exit(0)

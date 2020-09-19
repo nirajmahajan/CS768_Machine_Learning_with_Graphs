@@ -1,0 +1,40 @@
+esired Test Fraction		  = 0.2
+Using Test Fraction (for code) = 0.21
+Using Test Fraction (for validation) = 0.21
+
+Splitting Train-Test data
+Splitting Train-Validation data
+Observed fraction of train/validation edges	  : 0.8040
+Observed fraction of train/validation non edges	  : 0.8148
+
+Observed fraction of train edges	  : 0.8007
+Observed fraction of train non edges	  : 0.8098
+
+Adamic Adar
+MAP=0.7173116617238436
+MRR=0.8678197359097793
+
+Common Neighbor
+MAP=0.6733459241914391
+MRR=0.8317345458872178
+
+Preferential Attachment
+MAP=0.1130648996680612
+MRR=0.24196025795321438
+
+Katz
+MAP=0.700056070067448
+MRR=0.861712004600882
+
+Training Logistic Regression
+Training on set 0
+Generating Features
+Generating Adamic Adar
+Generating Common Neighbor
+Generating Preferential Attachment
+Generating Katz Measure
+Populating Features
+Generating test Features 
+
+MAP=0.6952893529542187
+MRR=0.849478391049924

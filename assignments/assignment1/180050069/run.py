@@ -6,12 +6,13 @@ import networkx as nx
 import pickle
 
 from random import sample
-from classes import Graph
+from classes import Graph, LogisticRegression
 from utils import MAP, MRR, katz_measure, common_neighbor
 from networkx.algorithms.link_prediction import adamic_adar_index, preferential_attachment
 
 # constant declarations
 filename = 'datasets/facebook.txt'
+pickle_path = './pickles/'
 
 # Arg parser declarations
 parser = argparse.ArgumentParser()
@@ -20,15 +21,22 @@ parser.add_argument('--only_preferential_attachment', action = 'store_true')
 parser.add_argument('--only_katz_measure', action = 'store_true')
 parser.add_argument('--only_common_neigbours', action = 'store_true')
 parser.add_argument('--only_logistic_regression', action = 'store_true')
+parser.add_argument('--load_lr', action = 'store_true')
 parser.add_argument('--load_pickle', action = 'store_true')
+parser.add_argument('--mini', action = 'store_true')
 parser.add_argument('--test_fraction', type = float, default = 0.2)
 args = parser.parse_args()
 
+if args.mini:
+	filename = 'datasets/facebookmini.txt'
+	pickle_path = './minipickles/'
 just_AA = False
 just_PA = False
 just_KM = False
 just_CN = False
 just_LR = False
+
+topk = None
 
 if args.only_adamic_adar:
 	just_AA = True
@@ -49,27 +57,50 @@ if not (just_CN or just_KM or just_PA or just_AA or just_LR):
 
 random.seed(0)
 test_fraction_mapping = {}
-test_fraction_mapping[0.1] = 0.062
-test_fraction_mapping[0.2] = 0.117
-test_fraction_mapping[0.3] = 0.174
-test_fraction_mapping[0.4] = 0.237
+test_fraction_mapping[0.1] = 0.11
+test_fraction_mapping[0.2] = 0.21
+test_fraction_mapping[0.3] = 0.309
+test_fraction_mapping[0.4] = 0.41
+
+test_fraction_mapping2 = 0.21
 
 print('Desired Test Fraction		  = {}'.format(args.test_fraction))
-print('Using Test Fraction (for code) = {}\n'.format(test_fraction_mapping[args.test_fraction]))
+print('Using Test Fraction (for code) = {}'.format(test_fraction_mapping[args.test_fraction]))
+print('Using Test Fraction (for validation) = {}\n'.format(test_fraction_mapping2))
 
 
 if args.load_pickle:
-	with open('./pickles/graph.pickle', 'rb') as handle:
+	with open(pickle_path + 'graph.pickle', 'rb') as handle:
 		graph = pickle.load(handle)['graph']
+	os._exit(0)
 else:
-	graph = Graph(filename)
+	G = nx.read_edgelist(filename)
+	graph = Graph(G)
+	print('Splitting Train-Test data')
 	graph.split_train_test(test_fraction_mapping[args.test_fraction])
+	newg = copy.deepcopy(graph.G_train)
+	gtrain_validate = Graph(newg)
+	print('Splitting Train-Validation data')
+	gtrain_validate.split_train_test(test_fraction_mapping2)
 
-	with open('./pickles/graph.pickle', 'wb') as handle:
+	with open(pickle_path + 'graph.pickle', 'wb') as handle:
 		pickle.dump({'graph':graph}, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+print ("Observed fraction of train/validation edges	  : %0.4f" % (len(gtrain_validate.G_train.edges())/(len(gtrain_validate.G.edges()))))
+print ("Observed fraction of train/validation non edges	  : %0.4f\n" % (len(gtrain_validate.G_train_invert.edges())/(len(gtrain_validate.G_train_invert.edges()) + len(gtrain_validate.G_test_invert.edges()))))
+# a = 0
+# a+= len(graph.G_train.edges())
+# a+= len(graph.G_train_invert.edges())
+# a+= len(graph.G_test.edges())
+# a+= len(graph.G_test_invert.edges())
+
+# print(a)
+# print(250*499)
+# os._exit(0)
 
 print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
 print ("Observed fraction of train non edges	  : %0.4f\n" % (len(graph.G_train_invert.edges())/(len(graph.G_train_invert.edges()) + len(graph.G_test_invert.edges()))))
+# os._exit(0)
 
 for (a,b) in graph.G_test.edges():
 	if (a == b):
@@ -110,15 +141,15 @@ for (a, b) in graph.G_test_invert.edges():
 if just_AA:
 	print('Adamic Adar', flush = True)
 	if args.load_pickle:
-		with open('./pickles/aa.pickle', 'rb') as handle:
+		with open(pickle_path + 'aa.pickle', 'rb') as handle:
 			aalist = pickle.load(handle)['aalist']
 	else:
 		aalist = list(adamic_adar_index(graph.G_train, ebunch = test_edges_nonedges))
-		with open('./pickles/aa.pickle', 'wb') as handle:
+		with open(pickle_path + 'aa.pickle', 'wb') as handle:
 			pickle.dump({'aalist':aalist}, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-	map = MAP(aalist, test_labels, graph.num_nodes)
-	mrr = MRR(aalist, test_labels, graph.num_nodes)
+	map = MAP(aalist, test_labels, graph.num_nodes, topk = topk)
+	mrr = MRR(aalist, test_labels, graph.num_nodes, topk = topk)
 	print('MAP={}'.format(map))
 	print('MRR={}'.format(mrr))
 	print('')
@@ -126,15 +157,15 @@ if just_AA:
 if just_CN:
 	print('Common Neighbor', flush = True)
 	if args.load_pickle:
-		with open('./pickles/cn.pickle', 'rb') as handle:
+		with open(pickle_path + 'cn.pickle', 'rb') as handle:
 			cnlist = pickle.load(handle)['cnlist']
 	else:
 		cnlist = list(common_neighbor(graph.G_train, ebunch = test_edges_nonedges))
-		with open('./pickles/cn.pickle', 'wb') as handle:
+		with open(pickle_path + 'cn.pickle', 'wb') as handle:
 			pickle.dump({'cnlist':cnlist}, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-	map = MAP(cnlist, test_labels, graph.num_nodes)
-	mrr = MRR(cnlist, test_labels, graph.num_nodes)
+	map = MAP(cnlist, test_labels, graph.num_nodes, topk = topk)
+	mrr = MRR(cnlist, test_labels, graph.num_nodes, topk = topk)
 	print('MAP={}'.format(map))
 	print('MRR={}'.format(mrr))
 	print('')
@@ -142,15 +173,15 @@ if just_CN:
 if just_PA:
 	print('Preferential Attachment', flush = True)
 	if args.load_pickle:
-		with open('./pickles/pa.pickle', 'rb') as handle:
+		with open(pickle_path + 'pa.pickle', 'rb') as handle:
 			palist = pickle.load(handle)['palist']
 	else:
 		palist = list(preferential_attachment(graph.G_train, ebunch = test_edges_nonedges))
-		with open('./pickles/pa.pickle', 'wb') as handle:
+		with open(pickle_path + 'pa.pickle', 'wb') as handle:
 			pickle.dump({'palist':palist}, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-	map = MAP(palist, test_labels, graph.num_nodes)
-	mrr = MRR(palist, test_labels, graph.num_nodes)
+	map = MAP(palist, test_labels, graph.num_nodes, topk = topk)
+	mrr = MRR(palist, test_labels, graph.num_nodes, topk = topk)
 	print('MAP={}'.format(map))
 	print('MRR={}'.format(mrr))
 	print('')
@@ -158,22 +189,31 @@ if just_PA:
 if just_KM:
 	print('Katz', flush = True)
 	if args.load_pickle:
-		with open('./pickles/km.pickle', 'rb') as handle:
+		with open(pickle_path + 'km.pickle', 'rb') as handle:
 			kmlist = pickle.load(handle)['kmlist']
 	else:
 		kmlist = katz_measure(graph.G_train, forgetting_factor_scale = .5, ebunch = test_edges_nonedges)
-		with open('./pickles/km.pickle', 'wb') as handle:
+		with open(pickle_path + 'km.pickle', 'wb') as handle:
 			pickle.dump({'kmlist':kmlist}, handle, protocol=pickle.HIGHEST_PROTOCOL)
-	map = MAP(kmlist, test_labels, graph.num_nodes)
-	mrr = MRR(kmlist, test_labels, graph.num_nodes)
+	map = MAP(kmlist, test_labels, graph.num_nodes, topk = topk)
+	mrr = MRR(kmlist, test_labels, graph.num_nodes, topk = topk)
 	print('MAP={}'.format(map))
 	print('MRR={}'.format(mrr))
+	print('')
 
 if just_LR:
-	 print('Training Logistic Regression')
-	 lr_instance = LogisticRegression()
-	 indexlst = list(preferential_attachment(graph.G_train))
-	 map = MAP(indexlst, test_labels, graph.num_nodes)
-	 mrr = MRR(indexlst, test_labels, graph.num_nodes)
-	 print('MAP={}'.format(map))
-	 print('MRR={}'.format(mrr))
+	print('Training Logistic Regression')
+	if args.load_pickle:
+		with open(pickle_path + 'lr.pickle', 'rb') as handle:
+			lrlist = pickle.load(handle)['lrlist']
+	else:
+		lr_instance = LogisticRegression(gtrain_validate, test_fraction_mapping2, test_edges_nonedges, num_train_sets = 1, load = args.load_lr)
+		lr_instance.train()
+		lrlist = lr_instance.get_scores()
+		with open(pickle_path + 'lr.pickle', 'wb') as handle:
+			pickle.dump({'lrlist':lrlist}, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+	map = MAP(lrlist, test_labels, graph.num_nodes, topk = topk)
+	mrr = MRR(lrlist, test_labels, graph.num_nodes, topk = topk)
+	print('MAP={}'.format(map))
+	print('MRR={}'.format(mrr))
