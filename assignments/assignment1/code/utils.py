@@ -77,10 +77,10 @@ def common_neighbor(gtrain, ebunch = None):
 	ans = []
 	if not ebunch is None:
 		for (a,b) in ebunch:
-			# b_neighbors = set(gtrain.neighbors(b))
-			# a_neighbors = set(gtrain.neighbors(a))
-			# cn = len(set.intersection(a_neighbors, b_neighbors))
-			cn = len(list(nx.common_neighbors(gtrain, a, b)))
+			b_neighbors = set(gtrain.neighbors(b))
+			a_neighbors = set(gtrain.neighbors(a))
+			cn = len(set.intersection(a_neighbors, b_neighbors))
+			# cn = len(list(nx.common_neighbors(gtrain, a, b)))
 			ans.append((a,b,cn))
 	else:
 		for a in range(max_size):

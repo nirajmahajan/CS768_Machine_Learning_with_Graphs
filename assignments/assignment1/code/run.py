@@ -6,7 +6,7 @@ import networkx as nx
 import pickle
 
 from random import sample
-from classes import Graph, LogisticRegression
+from classes import Graph, myLogisticRegression
 from utils import MAP, MRR, katz_measure, common_neighbor
 from networkx.algorithms.link_prediction import adamic_adar_index, preferential_attachment
 
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--only_adamic_adar', action = 'store_true')
 parser.add_argument('--only_preferential_attachment', action = 'store_true')
 parser.add_argument('--only_katz_measure', action = 'store_true')
-parser.add_argument('--only_common_neigbours', action = 'store_true')
+parser.add_argument('--only_common_neighbors', action = 'store_true')
 parser.add_argument('--only_logistic_regression', action = 'store_true')
 parser.add_argument('--load_lr', action = 'store_true')
 parser.add_argument('--load_pickle', action = 'store_true')
@@ -30,6 +30,7 @@ args = parser.parse_args()
 if args.mini:
 	filename = 'datasets/facebookmini.txt'
 	pickle_path = './minipickles/'
+	
 just_AA = False
 just_PA = False
 just_KM = False
@@ -44,7 +45,7 @@ if args.only_preferential_attachment:
 	just_PA = True
 if args.only_katz_measure:
 	just_KM = True
-if args.only_common_neigbours:
+if args.only_common_neighbors:
 	just_CN = True
 if args.only_logistic_regression:
 	just_LR = True
@@ -58,7 +59,7 @@ if not (just_CN or just_KM or just_PA or just_AA or just_LR):
 random.seed(0)
 test_fraction_mapping = {}
 test_fraction_mapping[0.1] = 0.11
-test_fraction_mapping[0.2] = 0.21
+test_fraction_mapping[0.2] = 0.2
 test_fraction_mapping[0.3] = 0.309
 test_fraction_mapping[0.4] = 0.41
 
@@ -71,8 +72,9 @@ print('Using Test Fraction (for validation) = {}\n'.format(test_fraction_mapping
 
 if args.load_pickle:
 	with open(pickle_path + 'graph.pickle', 'rb') as handle:
-		graph = pickle.load(handle)['graph']
-	os._exit(0)
+		dic = pickle.load(handle)
+		graph = dic['graph']
+		gtrain_validate = dic['gtrain_validate']
 else:
 	G = nx.read_edgelist(filename)
 	graph = Graph(G)
@@ -80,63 +82,24 @@ else:
 	graph.split_train_test(test_fraction_mapping[args.test_fraction])
 	newg = copy.deepcopy(graph.G_train)
 	gtrain_validate = Graph(newg)
-	print('Splitting Train-Validation data')
+	print('Splitting Train-Validation data\n')
 	gtrain_validate.split_train_test(test_fraction_mapping2)
 
 	with open(pickle_path + 'graph.pickle', 'wb') as handle:
-		pickle.dump({'graph':graph}, handle, protocol=pickle.HIGHEST_PROTOCOL)
+		pickle.dump({'graph':graph, 'gtrain_validate': gtrain_validate}, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 print ("Observed fraction of train/validation edges	  : %0.4f" % (len(gtrain_validate.G_train.edges())/(len(gtrain_validate.G.edges()))))
-print ("Observed fraction of train/validation non edges	  : %0.4f\n" % (len(gtrain_validate.G_train_invert.edges())/(len(gtrain_validate.G_train_invert.edges()) + len(gtrain_validate.G_test_invert.edges()))))
-# a = 0
-# a+= len(graph.G_train.edges())
-# a+= len(graph.G_train_invert.edges())
-# a+= len(graph.G_test.edges())
-# a+= len(graph.G_test_invert.edges())
+print ("Observed fraction of train edges	  : %0.4f\n" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
 
-# print(a)
-# print(250*499)
-# os._exit(0)
+test_edges_nonedges = [(u,v) for (u,v,_) in graph.test_edges_list]
 
-print ("Observed fraction of train edges	  : %0.4f" % (len(graph.G_train.edges())/(len(graph.G.edges()))))
-print ("Observed fraction of train non edges	  : %0.4f\n" % (len(graph.G_train_invert.edges())/(len(graph.G_train_invert.edges()) + len(graph.G_test_invert.edges()))))
-# os._exit(0)
-
-for (a,b) in graph.G_test.edges():
-	if (a == b):
-		print("Self Loop detected in test edges. Terminating.")
-		os._exit(0)
-
-for (a,b) in graph.G_test_invert.edges():
-	if (a == b):
-		print("Self Loop detected in test non edges. Terminating.")
-		os._exit(0)
-
-for (a,b) in graph.G_train.edges():
-	if (a == b):
-		print("Self Loop detected in train edges. Terminating.")
-		os._exit(0)
-
-for (a,b) in graph.G_train_invert.edges():
-	if (a == b):
-		print("Self Loop detected in train non edges. Terminating.")
-		os._exit(0)
-
-test_edges_nonedges = list(graph.G_test_invert.edges()) + list(graph.G_test.edges())
 test_labels = {}
-for (a, b) in graph.G_test.edges():
+for (a, b, label) in graph.test_edges_list:
 	if a > b:
 		temp = a
 		a = b
 		b = temp
-	test_labels[(a,b)] = 1
-for (a, b) in graph.G_test_invert.edges():
-	if a > b:
-		temp = a
-		a = b
-		b = temp
-	test_labels[(a,b)] = 0
-
+	test_labels[(a,b)] = label
 
 if just_AA:
 	print('Adamic Adar', flush = True)
@@ -207,7 +170,7 @@ if just_LR:
 		with open(pickle_path + 'lr.pickle', 'rb') as handle:
 			lrlist = pickle.load(handle)['lrlist']
 	else:
-		lr_instance = LogisticRegression(gtrain_validate, test_fraction_mapping2, test_edges_nonedges, num_train_sets = 1, load = args.load_lr)
+		lr_instance = myLogisticRegression(graph, test_fraction_mapping2, test_edges_nonedges, num_train_sets = 1, load = args.load_lr)
 		lr_instance.train()
 		lrlist = lr_instance.get_scores()
 		with open(pickle_path + 'lr.pickle', 'wb') as handle:
