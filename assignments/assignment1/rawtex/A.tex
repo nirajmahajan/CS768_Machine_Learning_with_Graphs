@@ -1,0 +1,193 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[margin = 1in, top=1.3in]{geometry}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[utf8]{inputenc}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle} 
+ 
+ 
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small{Niraj Mahajan (180050069)}}
+\lhead{CS-768 Assignment-1 : Report}
+\rfoot{Page \thepage}
+ 
+\begin{document}
+\tableofcontents
+\newpage
+
+\section{Data Loading and Processing}
+\subsection*{Steps taken in preprocessing}
+\quad The graph that is loaded from \textbf{facebook.txt} has many self loops and duplicate edges (a,b) and (b,a). Such edges are to be removed (as discussed with sir). We also will need a validation dataset, which will be needed while training the logistic regression. \\
+\null\quad In the sections where we have to perform link prediction using heuristics, I have divided the input graph \textbf{G} into two parts $G_{train}$ (80\% edges) and $G_{test}$ (20\% edges), but for the logistic regression part, I have further divided the graph \textbf{G} into $G_{train}$ (60\% edges), $G_{validation}$ (20\%edges) and $G_{test}$ (20\%edges). This validation dataset will be used only for finetuning logistic regression parameters.
+\subsection*{Test Fractions Used}
+Let us denote test fraction as $\lambda$ henceforth.
+\quad The problem statement specifies certain test fractions (say $\lambda$) for splitting the data. But, empirically, the algorithm to split the data may give a different test fraction as at every nodes, the x\% nodes are sampled, and at the end,  these sampled edges are combined in the test set. I have tried to minimise the discrepancy, and to maintain uniformity in the data by allowing only (a,b) node pairs if $a < b$. Here are the test fraction mapping that I have used:
+\begin{itemize}
+\item Desired Test Fraction 0.1 $\rightarrow$ Used Test Fraction 0.11 $\rightarrow$ Empirical Value 0.994
+\item Desired Test Fraction 0.2 $\rightarrow$ Used Test Fraction 0.21 $\rightarrow$ Empirical Value 0.1993
+\item Desired Test Fraction 0.3 $\rightarrow$ Used Test Fraction 0.31 $\rightarrow$ Empirical Value 0.3002
+\item Desired Test Fraction 0.4 $\rightarrow$ Used Test Fraction 0.41 $\rightarrow$ Empirical Value 0.4001
+\end{itemize}
+Here, the \textbf{Desired Test Fraction }is the value specified in the problem statement, the \textbf{Used Test Fraction} is the value I used in my code, and the \textbf{Empirical Value} is the value that was actually obtained after running the splitting algorithm.\\
+\null\quad Also, the lectures mention a "K", that is usually given in the problem specification (Top k predictions to be considered). But since there was no such K mentioned in the problem statement, I have set this K to $\infty$, ie, all score predictions are considered for MRR/MAP (also discussed with sir).
+\newpage
+\section{Heuristic Based Link Prediction}
+In this section, we perform 4 heuristic based link prediction methods on the input Graph.
+\subsection*{Results: (Task 3)}
+\begin{center}
+\begin{tabular}{ |p{0.6cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|  }
+ \hline
+ \multirow{2}{0.1cm}{$\lambda$} & \multirow{2}{3cm}{Evaluation Method} & \multicolumn{4}{c|}{Algorithm} \\
+ \cline{3-6}
+  &   & Adamic Adar & Common \newline Neighbor & Preferential \newline Attachment & Katz Measure \\
+ \hline
+ \multirow{2}{*}{0.1} & MAP & 0.776   & 0.772   &  0.128  & 0.752    \\
+ \cline{2-6}
+ & MRR & 0.878   & 0.876   &  0.209  &  0.858   \\
+ \hline
+ \multirow{2}{*}{0.2} & MAP & 0.726   & 0.719   &  0.112  &  0.698   \\
+ \cline{2-6}
+ & MRR & 0.875   & 0.872   &  0.242  & 0.860    \\
+ \hline
+ \multirow{2}{*}{0.3} & MAP & 0.689   & 0.679   &  0.103  &  0.659   \\
+ \cline{2-6}
+ & MRR & 0.870   & 0.866   &  0.278  &  0.852   \\
+ \hline
+ \multirow{2}{*}{0.4} & MAP & 0.644   & 0.631   &  0.097  & 0.616    \\
+ \cline{2-6}
+ & MRR & 0.856   & 0.852   &  0.313  & 0.838    \\
+ \hline
+
+\end{tabular}
+\end{center}
+
+\subsection*{Evaluations and Analysis}
+
+This subsection has all the analysis/evaluation done as required in the problem statement.
+\begin{itemize}
+\item \textbf{(Task-4):} According to the results we obtained, \textbf{Adamic Adar} seems to give the best results. Although the results obtained using common neighbours are comparable with those obtained using Adamic Adar, the former is indeed, is a bit inferrior as compared to the latter. \\
+\null\quad Common Neighbors simply consider the intersection of the adjacent edges of the given query node-pair. This is highly susceptible to getting biased by "celebrity nodes" or "popular nodes". Adamic Adar, on the other hand, tries to supress these "celebrity nodes" by weighting the contribution of each common neighbor by the degree of the common neighbor. So basically, if a "socially inactive node" is a common neighbor between some two nodes (u,v), then the contribution of this common neighbor should be higher as compared to a celebrity node. \\
+\null\quad Katz Measure also has a decent MAP score, but it still is inferior to Adamic Adar, as Adamic Adar relies on local features of a graph (ie the common neighbors) but Katz Measure relies on the number of paths between two nodes. Again, Katz Measure is susceptible to paths via "celebrity nodes".
+\null\quad Preferential Attachment has a really low performance as it is based on the concept "socially active nodes tend to create more edges". This is true to some extent. A socially active node will try to be friends with some nodes which are in it's vicinity (like Common Neighbours), but it is improbable that an edge can be established between any two random nodes, just because they are "very socially active". For example it is absurd to say that two socially active people, one in Russia and one in India, should be friends on facebook.
+
+\item \textbf{(Task 5):} From the results collected above, we observe that MRR offers a greater score (by magnitude). But, \textbf{MAP is actually much superior} to MRR, since MRR just looks at the first edge predicted correctly by a link prediction algorithm. Hence it is very easy to fool MRR, even for a poor algorithm. But MAP, on the other hand, is much stricter. It considers the average precision for each node, and appropriately penalizes all the mispredictions.  (unlike MRR which harshly penalizes all mispredictions untill the first correct prediction, which has a lot of uncertainty to it). So basically, an algorithm that performs well on MAP will mostly perform well on MRR, but the converse is not necessarily true. Hence I conclude that MAP is better than MRR.
+
+\item \textbf{(Task6):} Yes, the results that we get using MAP or MRR, for various link prediction algorithms are consistent. This is actually expected and can be explained. As we stated in the point above, if a method performs well using MAP, then we can expect it to perform well using MRR as well. Hence all the algorithms that are giving a high MAP score are performing well with respect to MRR as well. 
+\end{itemize}
+
+\newpage
+\section{Logistic Regression Based Link Prediction}
+This section summarises the observation and results obtained by training a logistic regression using Lasso Stochastic Gradient Descent, on the features obtained in the previous section.
+\subsection*{Results: (Task 7)}
+\begin{center}
+\begin{tabular}{ |p{3cm}|p{3cm}|p{3cm}|p{3cm}|p{3cm}|  }
+ \hline
+ \multirow{1}{3cm}{Evaluation Method} & \multicolumn{4}{c|}{Test Fraction} \\
+ \cline{2-5}
+   & \quad\quad\quad 0.1 & \quad\quad\quad 0.2 & \quad\quad\quad 0.3 & \quad\quad\quad 0.4 \\
+ \hline
+  \hline
+ MAP & \quad\quad 0.783   & \quad\quad 0.731   &  \quad\quad 0.688  & \quad\quad 0.642    \\
+ \hline
+ MRR & \quad\quad 0.881   & \quad\quad 0.874   &  \quad\quad 0.860  &  \quad\quad 0.842   \\
+ \hline
+\end{tabular}
+\end{center}
+
+\subsection*{Evaluations and Analysis}
+This subsection has all the analysis/evaluations  as required in the problem statement.
+\begin{itemize}
+\item \textbf{(Task 8):} It is quite clear from the results that the linear predictor fares better than the heuristic based link prediction algorithms that we implented in the previous section. The logistic regression considers a weighted sum of the scores from all the algorithms. So in a way, it is extracting the best of all algorithms byt fine tuning the weights and giving us a combined result which has a better performance than the individual predictors. 
+\end{itemize}
+
+\newpage
+\section{Usage of Code}
+
+\begin{enumerate}
+\item The following files are included in my submission directory.
+	\begin{itemize}
+	\item \textbf{run.sh:} A bash script to fit the problem statement (to have the 1st argument as data path). But it will be more convenient to run the python script directly.
+	\item \textbf{run.py:} The main code file which has the driver code, but needs the data path as a flag argument.
+	\item \textbf{classes.py:} Has the defination of classes for a Graph object and a Logistic Regression object.
+	\item \textbf{utils.py:} Has utility functions that are called in both classes.py and run.py. The functions that are defined here are - MRR, MAP, common\_neighbors, katz\_measure, find\_nbr\_nonnbr
+	\item \textbf{test\_fraction\_tuner.py:} Contains the code that I used to fine tune the test fraction for various desired values
+	\end{itemize}
+\item Python libraries necessary:
+\begin{itemize}
+\setlength\itemsep{0.1pt}
+\item networkx
+\item pickle
+\item matplotlib
+\item sklearn
+\item numpy
+\item argparse,
+\end{itemize}
+\item Default Running the code. Please note that the entire execution of this code (including logistic regression) takes around 20 minutes. I thank you for your patience. 
+\begin{lstlisting}[language=Bash]
+$ ./run.sh <path to dataset>
+# This runs the code with test fraction = 0.2 for all the 4 link predictors and Logistic Regression.
+\end{lstlisting}
+\item Running the python code. Please note that sys.argv and argparse cannot be used together. Hence, since I already had used argparse for various arguments, I could not have the second argument fixed as dataset path. Hence I have added a --data flag which can take the path to the dataset. Thanks again for considering this. (else the bash script satisfies the problem statement, although the python script is more convenient)
+\begin{lstlisting}[language=Bash]
+$ python3 run.py --data <path to dataset>
+# This runs the default code on the dataset specified by the flag.
+\end{lstlisting}
+\newpage
+\item Specifying a test fraction
+\begin{lstlisting}[language=Bash]
+$ python3 run.py --test_fraction <!!>
+# This runs the code with the custom test fraction. The only valid input for this argument are {0.1, 0.2, 0.3, 0.4}. Any other input will raise a KeyError.
+\end{lstlisting}
+\item Running a specific algorithm
+\begin{lstlisting}[language=Bash]
+$ python3 run.py --only_adamic_adar
+$ python3 run.py --only_preferential_attachment
+$ python3 run.py --only_katz_measure
+$ python3 run.py --only_common_neighbors
+$ python3 run.py --only_logistic_regression
+# This runs the code with the specified algorithm. This flag can be combined with the flag for specifying a test fraction
+\end{lstlisting}
+\item Saving and Loading the score predictions in a pickle format
+\begin{lstlisting}[language=Bash]
+$ python3 run.py --dump_pickle
+$ python3 run.py --load_pickle
+# This runs creates a directory './pickles' and saves the predictions in this folder. These pickles can subsequently be loaded to give the MAP/MRR analysis faster.
+\end{lstlisting}
+\end{enumerate}
+
+\end{document}
