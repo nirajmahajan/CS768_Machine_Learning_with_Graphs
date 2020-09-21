@@ -53,7 +53,7 @@
 \section{Data Loading and Processing}
 \subsection*{Steps taken in preprocessing}
 \quad The graph that is loaded from \textbf{facebook.txt} has many self loops and duplicate edges (a,b) and (b,a). Such edges are to be removed (as discussed with sir). We also will need a validation dataset, which will be needed while training the logistic regression. \\
-\null\quad In the sections where we have to perform link prediction using heuristics, I have divided the input graph \textbf{G} into two parts $G_{train}$ (80\% edges) and $G_{test}$ (20\% edges), but for the logistic regression part, I have further divided the graph \textbf{G} into $G_{train}$ (60\% edges), $G_{validation}$ (20\%edges) and $G_{test}$ (20\%edges). This validation dataset will be used only for finetuning logistic regression parameters.
+\null\quad In the sections where we have to perform link prediction using heuristics, I have divided the input graph \textbf{G} into two parts $G_{train}$ (80\% edges) and $G_{test}$ (20\% edges), but for the logistic regression part, I have further divided the graph \textbf{G} into $G_{train}$ (60\% edges), $G_{validation}$ (20\%edges) and $G_{test}$ (20\%edges). This validation dataset will be used only for finetuning parameters (like the $\beta$ in katz measure) as well as for training the logistic regresssion (as discussed with sir).
 \subsection*{Test Fractions Used}
 Let us denote test fraction as $\lambda$ henceforth.
 \quad The problem statement specifies certain test fractions (say $\lambda$) for splitting the data. But, empirically, the algorithm to split the data may give a different test fraction as at every nodes, the x\% nodes are sampled, and at the end,  these sampled edges are combined in the test set. I have tried to minimise the discrepancy, and to maintain uniformity in the data by allowing only (a,b) node pairs if $a < b$. Here are the test fraction mapping that I have used:
@@ -122,9 +122,9 @@ This section summarises the observation and results obtained by training a logis
    & \quad\quad\quad 0.1 & \quad\quad\quad 0.2 & \quad\quad\quad 0.3 & \quad\quad\quad 0.4 \\
  \hline
   \hline
- MAP & \quad\quad 0.783   & \quad\quad 0.731   &  \quad\quad 0.688  & \quad\quad 0.642    \\
+ MAP & \quad\quad 0.759   & \quad\quad 0.694   &  \quad\quad 0.647  & \quad\quad 0.596    \\
  \hline
- MRR & \quad\quad 0.881   & \quad\quad 0.874   &  \quad\quad 0.860  &  \quad\quad 0.842   \\
+ MRR & \quad\quad 0.863   & \quad\quad 0.849   &  \quad\quad 0.837  &  \quad\quad 0.817   \\
  \hline
 \end{tabular}
 \end{center}
@@ -132,7 +132,7 @@ This section summarises the observation and results obtained by training a logis
 \subsection*{Evaluations and Analysis}
 This subsection has all the analysis/evaluations  as required in the problem statement.
 \begin{itemize}
-\item \textbf{(Task 8):} It is quite clear from the results that the linear predictor fares better than the heuristic based link prediction algorithms that we implented in the previous section. The logistic regression considers a weighted sum of the scores from all the algorithms. So in a way, it is extracting the best of all algorithms byt fine tuning the weights and giving us a combined result which has a better performance than the individual predictors. 
+\item \textbf{(Task 8):} I believe that the logistic regression predictor fares better than the heuristic based link prediction algorithms that we implented in the previous section. The logistic regression considers a weighted sum of the scores from all the algorithms. So in a way, it is extracting the best of all algorithms byt fine tuning the weights and giving us a combined result which has a better performance than the individual predictors. Although the MAP/MRR figures of logistic regression are slightly lower than the heuristic based methods, we also must consider that in the 60-20-20 division of our graph, only 20 percent edges were used for training the weights (which is much much less than what the heuristic based methods considered for training). Hence, overall, logistic regression seems to be a better method.
 \end{itemize}
 
 \newpage

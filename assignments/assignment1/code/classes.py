@@ -86,7 +86,7 @@ class myLogisticRegression(object):
 		super(myLogisticRegression, self).__init__()
 		self.corelr = LogisticRegression(random_state = 0, max_iter = 500, solver = 'liblinear', penalty = 'l1')
 		self.ebunch = ebunch
-		self.backbrop_test_edges_nonedges = test_edges_nonedges = [(u,v) for (u,v,_) in graph.test_edges_list]
+		self.backbrop_test_edges_nonedges = [(u,v) for (u,v,_) in graph.test_edges_list]
 		self.dump_pickle = dump_pickle
 		self.load_pickle = load_pickle
 		self.graph = graph
@@ -226,6 +226,7 @@ class myLogisticRegression(object):
 			if not i == 0:
 				self.regenerate_graph()
 			self.regenerate_features()
+			print('Training (Takes a lot of time)')
 			self.corelr.fit(self.X, self.Y)
 
 		
